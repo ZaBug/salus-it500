@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+.venv/
+.pytest_cache/
+
+# JetBrains IDE files
+.idea/
+*.iml
+
+# Claude Code: ignore local/personal config
+.claude/settings.local.json
+.claude/worktrees/
+.claude/todos/

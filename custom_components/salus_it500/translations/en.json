@@ -1,0 +1,103 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Salus account",
+        "description": "The account of the Salus iT500 mobile app (the same login as salus-it500.com).",
+        "data": {
+          "username": "Email",
+          "password": "Password"
+        },
+        "data_description": {
+          "password": "If the password contains special characters and login fails, try it without them: Salus strips them when the password is created."
+        }
+      },
+      "device": {
+        "title": "Thermostat",
+        "data": {
+          "device_id": "Thermostat"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Salus account",
+        "description": "Salus rejected the stored credentials. Enter them again.",
+        "data": {
+          "username": "Email",
+          "password": "Password"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Invalid email or password.",
+      "cannot_connect": "Cannot reach the Salus cloud."
+    },
+    "abort": {
+      "already_configured": "This thermostat is already configured.",
+      "no_devices": "No thermostat is registered on this account.",
+      "wrong_account": "This account does not own the configured thermostat.",
+      "reauth_successful": "Credentials updated."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Salus iT500 options",
+        "data": {
+          "scan_interval": "Cloud polling interval",
+          "wake_interval": "Wake the thermostat every (0 = never)"
+        },
+        "data_description": {
+          "scan_interval": "Reads the copy kept by the Salus cloud. Does not wake the thermostat, so it costs no battery.",
+          "wake_interval": "The thermostat reports only when a value changes. Waking it forces a full report within seconds but uses battery. Commands always wake it."
+        }
+      }
+    }
+  },
+  "entity": {
+    "climate": {
+      "thermostat": {
+        "state_attributes": {
+          "preset_mode": {
+            "state": {
+              "none": "None",
+              "temp_hold": "Temporary hold"
+            }
+          }
+        }
+      }
+    },
+    "sensor": {
+      "room_temperature": {
+        "name": "Room temperature"
+      },
+      "setpoint": {
+        "name": "Setpoint"
+      },
+      "last_report": {
+        "name": "Last report"
+      },
+      "signal_strength": {
+        "name": "Signal strength"
+      },
+      "boost_hours": {
+        "name": "Boost remaining"
+      }
+    },
+    "binary_sensor": {
+      "heating": {
+        "name": "Heating"
+      },
+      "online": {
+        "name": "Gateway online"
+      },
+      "frost_protection": {
+        "name": "Frost protection"
+      }
+    },
+    "button": {
+      "refresh": {
+        "name": "Refresh"
+      }
+    }
+  }
+}

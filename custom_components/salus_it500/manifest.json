@@ -1,0 +1,15 @@
+{
+  "domain": "salus_it500",
+  "name": "Salus iT500",
+  "codeowners": [
+    "@ZaBug"
+  ],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/ZaBug/salus-it500",
+  "integration_type": "device",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/ZaBug/salus-it500/issues",
+  "requirements": [],
+  "version": "0.1.0"
+}
