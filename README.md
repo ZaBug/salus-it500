@@ -32,16 +32,45 @@ same data as the app, so the data is not the problem; what was missing:
 
 | Entity | What it shows |
 |---|---|
-| `climate.*` | Zone 1. Modes: **Off**, **Heat** (manual setpoint), **Auto** (schedule). Preset **Temporary hold** = schedule paused at a setpoint. Target in 0.1 °C steps |
+| `climate.*` | Zone 1 (and `climate.*_zone_2` on two-zone systems). Modes: **Off**, **Heat** (manual setpoint), **Auto** (schedule). Preset **Temporary hold** = schedule paused at a setpoint. Target in 0.1 °C steps |
 | `sensor.*_room_temperature`, `_setpoint` | Temperatures as last reported |
 | `sensor.*_last_report` | When the thermostat last reported (diagnostic) |
-| `sensor.*_boost_remaining` | Hours of boost left (diagnostic) |
+| `sensor.*_boost_remaining`, `binary_sensor.*_boost` | Hours of boost left / boost running |
 | `sensor.*_signal_strength` | RF signal between thermostat and gateway (disabled by default) |
 | `binary_sensor.*_heating` | Boiler relay on |
 | `binary_sensor.*_battery` | Thermostat batteries low |
 | `binary_sensor.*_gateway_online` | Gateway connected to the Salus cloud |
 | `binary_sensor.*_frost_protection` | Frost protection active |
 | `button.*_refresh` | Wake the thermostat so it reports now |
+
+### Zone 2
+
+On systems with a second heating zone (an iT300TX receiver; the thermostat
+reports system type `CH1+CH2`), the integration adds `climate.*_zone_2` and zone 2
+room temperature, setpoint, boost, heating and frost protection entities. On
+single-zone systems nothing is created. **Untested on real hardware**: the zone 2
+attributes (`B84`-`B94`) mirror zone 1 and the code is covered by simulated tests
+only. Reports from two-zone owners are welcome.
+
+## Boost
+
+`salus_it500.boost` heats a zone for 1-3 hours, optionally at a new setpoint;
+the thermostat counts the hours down and returns to its previous program by
+itself. `salus_it500.cancel_boost` stops it. Both target a climate entity and
+are confirmed by the thermostat like every other command.
+
+```yaml
+action: salus_it500.boost
+target:
+  entity_id: climate.salus_thermostat
+data:
+  hours: 2
+  temperature: 21
+```
+
+The iT500 manual documents boost (1, 2 or 3 hours) for hot water; the heating
+boost uses the zone attribute `A91` (`B91` for zone 2), which the API describes
+as "CH1 Boost Remaining hours".
 
 ## Installation
 
@@ -77,15 +106,18 @@ login fails, try the password without the special characters.
 | `A84` / `A85` | Room temperature / setpoint (0.01 °C) |
 | `A87` | Relay (heating) |
 | `A88` / `A89` / `A92` | Temporary hold / off / manual flags |
-| `A90`, `A91` | Frost protection active, boost hours left |
+| `A90`, `A91` | Frost protection active, boost hours left (write 1-3 to start, 0 to cancel) |
+| `B84`-`B94` | Zone 2, same layout as zone 1 |
+| `S06` | System type: 0 = CH1, 1 = CH1+CH2, 2 = CH1 + hot water |
 | `S03` | Battery: `0` = OK |
 | `online`, `rfrssi` | Gateway online, RF signal |
 | `F` | Refresh mode for N seconds |
 
 ## Known limitations
 
-* Zone 2 (iT300TX) and hot water are not exposed yet (the test unit has neither).
-* Boost, advance and skip are not exposed yet.
+* Zone 2 is untested on real hardware (see above). Hot water is not exposed.
+* Advance, skip and delay are not implemented: the thermostat has no such
+  commands, so they would be Home Assistant timers; an automation does the same.
 * The API host is the EMEA endpoint used by the app; other regions are untested.
 
 ## Credits

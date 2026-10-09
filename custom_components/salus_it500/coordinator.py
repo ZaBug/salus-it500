@@ -24,7 +24,18 @@ from .const import (
     DOMAIN,
     REFRESH_SECONDS,
 )
-from .model import ATTR_REFRESH, ATTR_SETPOINT, Mode, ThermostatState, decode, mode_writes, setpoint_value
+from .model import (
+    ATTR_REFRESH,
+    BOOST_HOURS,
+    SETPOINT,
+    Mode,
+    ThermostatState,
+    Zone,
+    boost_writes,
+    decode,
+    mode_writes,
+    setpoint_value,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -130,11 +141,18 @@ class SalusCoordinator(DataUpdateCoordinator[ThermostatState]):
             await self._set(ATTR_REFRESH, str(REFRESH_SECONDS))
             await self._poll_until(lambda _attrs: True, since_ms)
 
-    async def _async_command(self, writes: list[tuple[str, str]]) -> None:
-        """Wake the thermostat, write, and confirm from a fresh report; retry once."""
+    async def _async_command(
+        self, writes: list[tuple[str, str]], force: list[str] | None = None
+    ) -> None:
+        """Wake the thermostat, write, and confirm from a fresh report; retry once.
+
+        Only attributes whose value differs are written, except those in force
+        (written on the first attempt even when equal).
+        """
         async with self._command_lock:
             for attempt in range(1, COMMAND_ATTEMPTS + 1):
-                pending = [(n, v) for n, v in writes if self._current(n) != v]
+                forced = force if attempt == 1 else []
+                pending = [(n, v) for n, v in writes if self._current(n) != v or n in (forced or [])]
                 if not pending:
                     return
                 since_ms = _now_ms()
@@ -158,10 +176,23 @@ class SalusCoordinator(DataUpdateCoordinator[ThermostatState]):
         attr = self.attributes.get(name)
         return None if attr is None else attr.value
 
-    async def async_set_temperature(self, temperature: float) -> None:
-        """Set the zone 1 setpoint."""
-        await self._async_command([(ATTR_SETPOINT, setpoint_value(temperature))])
+    async def async_set_temperature(self, temperature: float, zone: Zone = Zone.ONE) -> None:
+        """Set a zone setpoint."""
+        await self._async_command([(zone.attr(SETPOINT), setpoint_value(temperature))])
 
-    async def async_set_mode(self, mode: Mode) -> None:
+    async def async_set_mode(self, mode: Mode, zone: Zone = Zone.ONE) -> None:
         """Select off / manual / auto / temporary hold."""
-        await self._async_command(mode_writes(mode))
+        await self._async_command(mode_writes(mode, zone))
+
+    async def async_boost(self, hours: int, temperature: float | None, zone: Zone = Zone.ONE) -> None:
+        """Heat for 1-3 hours (optionally at a new setpoint); the thermostat then reverts by itself."""
+        try:
+            writes = boost_writes(zone, hours, temperature)
+        except ValueError as err:
+            raise HomeAssistantError(str(err)) from err
+        # Rewrite the hours even when equal, so a running boost restarts from the full length.
+        await self._async_command(writes, force=[zone.attr(BOOST_HOURS)])
+
+    async def async_cancel_boost(self, zone: Zone = Zone.ONE) -> None:
+        """Stop a running boost."""
+        await self._async_command([(zone.attr(BOOST_HOURS), "0")])

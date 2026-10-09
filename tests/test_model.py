@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from conftest import api, fixture_text, model
 
 Attribute = api.Attribute
@@ -10,10 +12,14 @@ Mode = model.Mode
 
 def test_decode_recorded_device():
     state = model.decode(api.parse_attributes(fixture_text("attributes.xml")))
-    assert state.room_temperature == 17.5
-    assert state.setpoint == 12.1
-    assert state.heating is False
-    assert state.mode is Mode.OFF  # A89=1 even though A92 (manual) is also 1
+    zone = state.zone1
+    assert zone.room_temperature == 17.5
+    assert zone.setpoint == 12.1
+    assert zone.heating is False
+    assert zone.mode is Mode.OFF  # A89=1 even though A92 (manual) is also 1
+    assert zone.boost_active is False
+    assert state.system_type is model.SystemType.CH1
+    assert list(state.zones) == [model.Zone.ONE]  # CH2 placeholders (60.0 C) are ignored
     assert state.battery_low is False
     assert state.online is True
     assert state.rssi == -56
@@ -33,6 +39,7 @@ def test_modes():
     assert model.decode_mode(_attrs(A89="0", A92="1", A88="0")) is Mode.MANUAL
     assert model.decode_mode(_attrs(A89="0", A92="0", A88="1")) is Mode.TEMP_HOLD
     assert model.decode_mode(_attrs(A89="0", A92="0", A88="0")) is Mode.AUTO
+    assert model.decode_mode(_attrs(B89="1"), model.Zone.TWO) is Mode.OFF
 
 
 def test_battery_low_when_not_zero():
@@ -45,13 +52,24 @@ def test_bogus_32_reading_is_not_plausible():
     assert model.decode(_attrs(A84="3200", A85="2100")).plausible
 
 
+def test_zone2_only_on_two_zone_systems():
+    attrs = _attrs(S06="1", A84="2000", B84="1850", B85="2100", B87="1", B89="0", B92="1", B91="2")
+    zone2 = model.decode(attrs).zones[model.Zone.TWO]
+    assert zone2.room_temperature == 18.5
+    assert zone2.setpoint == 21.0
+    assert zone2.heating is True
+    assert zone2.mode is Mode.MANUAL
+    assert zone2.boost_active is True
+    assert model.Zone.TWO.attr(model.SETPOINT) == "B85"
+
+
 def test_last_report_uses_zone_attributes_only():
     attrs = {
         "A84": Attribute("1750", 5000),
         "S03": Attribute("0", 9000),
         "A85": Attribute("1210", 7000),
     }
-    assert model.decode(attrs).last_report_ms == 7000
+    assert model.decode(attrs).zone1.last_report_ms == 7000
 
 
 def test_setpoint_value_rounds_to_tenths():
@@ -64,3 +82,12 @@ def test_mode_writes_leave_off_last():
     assert model.mode_writes(Mode.OFF) == [("A89", "1")]
     assert model.mode_writes(Mode.MANUAL)[-1] == ("A89", "0")
     assert model.mode_writes(Mode.AUTO) == [("A92", "0"), ("A88", "0"), ("A89", "0")]
+    assert model.mode_writes(Mode.OFF, model.Zone.TWO) == [("B89", "1")]
+
+
+def test_boost_writes():
+    assert model.boost_writes(model.Zone.ONE, 2, None) == [("A91", "2")]
+    assert model.boost_writes(model.Zone.TWO, 3, 21.5) == [("B85", "2150"), ("B91", "3")]
+    for hours in (0, 4):
+        with pytest.raises(ValueError):
+            model.boost_writes(model.Zone.ONE, hours, None)

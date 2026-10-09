@@ -48,6 +48,13 @@ responses with the device id, user id and description replaced.
 - **Mode flags:** `A89=1` means off regardless of `A92` (manual) or `A88`
   (temporary hold). When leaving off, write the other flags first and `A89=0`
   last. Only write flags whose value differs.
+- **Zones:** attribute letter `A` = zone 1, `B` = zone 2 (same numbers). Zone 2
+  entities exist only when `S06 == 1` (CH1+CH2). On single-zone units the `B`
+  attributes hold placeholders (room 60.0 C, setpoint 0): never show them.
+  Zone 1 unique ids keep the plain keys of v0.1; zone 2 uses `zone2_` keys.
+- **Boost:** write the setpoint (optional) then `A91` = 1-3 hours; `A91=0`
+  cancels. Not yet verified on the live unit: test only with the owner's consent,
+  it starts the boiler.
 - **Battery:** `S03 == "0"` is OK; anything else is low (same rule as the
   website's `battery_check.php`).
 - **32/32 reading** (room and setpoint both 32 °C) means a broken session:

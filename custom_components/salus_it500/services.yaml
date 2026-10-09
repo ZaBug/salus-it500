@@ -1,0 +1,28 @@
+boost:
+  target:
+    entity:
+      integration: salus_it500
+      domain: climate
+  fields:
+    hours:
+      required: true
+      default: 1
+      selector:
+        number:
+          min: 1
+          max: 3
+          step: 1
+          unit_of_measurement: h
+    temperature:
+      selector:
+        number:
+          min: 5
+          max: 35
+          step: 0.1
+          unit_of_measurement: "°C"
+
+cancel_boost:
+  target:
+    entity:
+      integration: salus_it500
+      domain: climate

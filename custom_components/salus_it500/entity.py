@@ -7,6 +7,12 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN, MANUFACTURER, MODEL
 from .coordinator import SalusCoordinator
+from .model import Zone
+
+
+def zone_key(zone: Zone, key: str) -> str:
+    """Unique id suffix; zone 1 keeps the plain key used since v0.1."""
+    return key if zone is Zone.ONE else f"zone2_{key}"
 
 
 class SalusEntity(CoordinatorEntity[SalusCoordinator]):

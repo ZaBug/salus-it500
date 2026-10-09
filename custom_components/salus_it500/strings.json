@@ -64,6 +64,17 @@
             }
           }
         }
+      },
+      "thermostat_zone2": {
+        "name": "Zone 2",
+        "state_attributes": {
+          "preset_mode": {
+            "state": {
+              "none": "None",
+              "temp_hold": "Temporary hold"
+            }
+          }
+        }
       }
     },
     "sensor": {
@@ -81,6 +92,15 @@
       },
       "boost_hours": {
         "name": "Boost remaining"
+      },
+      "zone2_room_temperature": {
+        "name": "Zone 2 room temperature"
+      },
+      "zone2_setpoint": {
+        "name": "Zone 2 setpoint"
+      },
+      "zone2_boost_hours": {
+        "name": "Zone 2 boost remaining"
       }
     },
     "binary_sensor": {
@@ -92,12 +112,44 @@
       },
       "frost_protection": {
         "name": "Frost protection"
+      },
+      "boost": {
+        "name": "Boost"
+      },
+      "zone2_heating": {
+        "name": "Zone 2 heating"
+      },
+      "zone2_boost": {
+        "name": "Zone 2 boost"
+      },
+      "zone2_frost_protection": {
+        "name": "Zone 2 frost protection"
       }
     },
     "button": {
       "refresh": {
         "name": "Refresh"
       }
+    }
+  },
+  "services": {
+    "boost": {
+      "name": "Boost",
+      "description": "Heat for 1 to 3 hours, optionally at a new setpoint. The thermostat returns to its previous program by itself when the time is up.",
+      "fields": {
+        "hours": {
+          "name": "Hours",
+          "description": "Boost length (1-3 hours)."
+        },
+        "temperature": {
+          "name": "Temperature",
+          "description": "Setpoint during the boost. Leave empty to keep the current setpoint."
+        }
+      }
+    },
+    "cancel_boost": {
+      "name": "Cancel boost",
+      "description": "Stop a running boost."
     }
   }
 }

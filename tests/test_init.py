@@ -6,6 +6,7 @@ import time
 from unittest.mock import patch
 
 import pytest
+import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.components.climate import HVACMode
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
@@ -34,9 +35,14 @@ class FakeCloud:
     devices = [DEVICE]
     login_error: Exception | None = None
     apply_writes = True
+    two_zones = False
 
     def __init__(self, session, username, password) -> None:
         self.attributes = parse_attributes(fixture_text("attributes.xml"))
+        if FakeCloud.two_zones:
+            stamp = self.attributes["A84"].updated_ms
+            for name, value in {"S06": "1", "B84": "1850", "B85": "2000", "B89": "0", "B92": "1"}.items():
+                self.attributes[name] = Attribute(value, stamp)
         self.writes: list[tuple[str, str]] = []
         FakeCloud.last = self
 
@@ -74,6 +80,7 @@ def fake_cloud():
     FakeCloud.devices = [DEVICE]
     FakeCloud.login_error = None
     FakeCloud.apply_writes = True
+    FakeCloud.two_zones = False
     with (
         patch("custom_components.salus_it500.SalusClient", FakeCloud),
         patch("custom_components.salus_it500.config_flow.SalusClient", FakeCloud),
@@ -170,6 +177,59 @@ async def test_unconfirmed_command_is_retried_then_raises(hass: HomeAssistant, f
             "climate", "set_temperature", {"entity_id": "climate.home", "temperature": 20}, blocking=True
         )
     assert fake_cloud.last.writes == [("F", "60"), ("A85", "2000")] * 2
+
+
+async def test_boost_and_cancel(hass: HomeAssistant, fake_cloud) -> None:
+    await _setup(hass)
+    await hass.services.async_call(
+        DOMAIN, "boost", {"entity_id": "climate.home", "hours": 2, "temperature": 21}, blocking=True
+    )
+    assert fake_cloud.last.writes == [("F", "60"), ("A85", "2100"), ("A91", "2")]
+    assert hass.states.get("binary_sensor.home_boost").state == "on"
+    assert hass.states.get("climate.home").attributes["boost_hours"] == 2
+    fake_cloud.last.writes.clear()
+    await hass.services.async_call(DOMAIN, "cancel_boost", {"entity_id": "climate.home"}, blocking=True)
+    assert fake_cloud.last.writes == [("F", "60"), ("A91", "0")]
+    assert hass.states.get("binary_sensor.home_boost").state == "off"
+
+
+async def test_boost_hours_are_validated(hass: HomeAssistant) -> None:
+    await _setup(hass)
+    with pytest.raises(vol.Invalid):
+        await hass.services.async_call(
+            DOMAIN, "boost", {"entity_id": "climate.home", "hours": 5}, blocking=True
+        )
+
+
+async def test_single_zone_has_no_zone2_entities(hass: HomeAssistant) -> None:
+    await _setup(hass)
+    assert hass.states.get("climate.home_zone_2") is None
+    assert hass.states.get("sensor.home_zone_2_room_temperature") is None
+
+
+async def test_two_zone_system(hass: HomeAssistant, fake_cloud) -> None:
+    fake_cloud.two_zones = True
+    await _setup(hass)
+    zone2 = hass.states.get("climate.home_zone_2")
+    assert zone2 is not None
+    assert zone2.state == HVACMode.HEAT
+    assert zone2.attributes["current_temperature"] == 18.5
+    assert hass.states.get("sensor.home_zone_2_room_temperature").state == "18.5"
+    await hass.services.async_call(
+        "climate", "set_temperature", {"entity_id": "climate.home_zone_2", "temperature": 19}, blocking=True
+    )
+    assert fake_cloud.last.writes == [("F", "60"), ("B85", "1900")]
+    assert hass.states.get("climate.home").attributes["temperature"] == 12.1
+
+
+async def test_diagnostics_redacts_credentials(hass: HomeAssistant) -> None:
+    from custom_components.salus_it500.diagnostics import async_get_config_entry_diagnostics
+
+    entry = await _setup(hass)
+    data = await async_get_config_entry_diagnostics(hass, entry)
+    assert data["entry"]["password"] == "**REDACTED**"
+    assert data["state"]["zones"]["zone1"]["room_temperature"] == 17.5
+    assert "A84" in data["attributes"]
 
 
 async def test_unload(hass: HomeAssistant) -> None:
