@@ -24,7 +24,7 @@ from custom_components.salus_it500.const import CONF_DEVICE_ID, DOMAIN
 
 from conftest import fixture_text
 
-DEVICE = DeviceInfo(device_id="123456789", name="STA10146878", type_id="1")
+DEVICE = DeviceInfo(device_id="123456789", name="STA00000000", type_id="1")
 CREDENTIALS = {CONF_USERNAME: "user@example.com", CONF_PASSWORD: "secret"}
 
 
@@ -103,6 +103,7 @@ async def test_config_flow_single_device(hass: HomeAssistant) -> None:
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert result["data"][CONF_DEVICE_ID] == DEVICE.device_id
     assert result["result"].unique_id == DEVICE.device_id
+    assert result["title"] == "Salus Home"  # description from the attributes
 
 
 async def test_config_flow_invalid_auth(hass: HomeAssistant, fake_cloud) -> None:

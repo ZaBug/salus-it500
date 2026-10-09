@@ -25,6 +25,7 @@ from .const import (
     MAX_WAKE_INTERVAL,
     MIN_SCAN_INTERVAL,
 )
+from .model import ATTR_DESCRIPTION
 
 USER_SCHEMA = vol.Schema(
     {
@@ -48,11 +49,24 @@ class SalusConfigFlow(ConfigFlow, domain=DOMAIN):
     def __init__(self) -> None:
         self._credentials: dict[str, str] = {}
         self._devices: list[DeviceInfo] = []
+        self._client: SalusClient | None = None
 
     async def _async_fetch_devices(self, username: str, password: str) -> list[DeviceInfo]:
-        client = SalusClient(async_get_clientsession(self.hass), username, password)
-        await client.login()
-        return await client.async_get_devices()
+        self._client = SalusClient(async_get_clientsession(self.hass), username, password)
+        await self._client.login()
+        return await self._client.async_get_devices()
+
+    async def _async_title(self, device: DeviceInfo) -> str:
+        """The description set in the Salus app (e.g. the location), else the gateway name."""
+        if self._client is not None:
+            try:
+                attributes = await self._client.async_get_attributes(device.device_id)
+            except SalusError:
+                attributes = {}
+            description = attributes.get(ATTR_DESCRIPTION)
+            if description is not None and description.value:
+                return f"Salus {description.value}"
+        return f"Salus {device.name}"
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         errors: dict[str, str] = {}
@@ -100,7 +114,7 @@ class SalusConfigFlow(ConfigFlow, domain=DOMAIN):
         await self.async_set_unique_id(device.device_id)
         self._abort_if_unique_id_configured()
         return self.async_create_entry(
-            title=f"Salus {device.name}",
+            title=await self._async_title(device),
             data={**self._credentials, CONF_DEVICE_ID: device.device_id},
         )
 
