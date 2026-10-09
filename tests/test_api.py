@@ -63,7 +63,7 @@ async def test_login_rejected():
 async def test_device_list():
     session = FakeSession([LOGIN_OK, FakeResponse(200, fixture_text("device_list.xml"))])
     devices = await api.SalusClient(session, "u", "p").async_get_devices()
-    assert devices == [api.DeviceInfo(device_id="123456789", name="STA10146878", type_id="1")]
+    assert devices == [api.DeviceInfo(device_id="123456789", name="STA00000000", type_id="1")]
     assert session.calls[1][2]["data"]["secToken"] == "tok1"
 
 

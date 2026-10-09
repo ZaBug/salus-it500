@@ -1,1 +1,1 @@
-<ns1:getDeviceListResponse xmlns:ns1="http://arrayent.com/zamapi/"><devList><devId>123456789</devId><devName>STA10146878</devName><typeId>1</typeId><sleepMode>SHORT</sleepMode><appID>1097</appID><userID>987654</userID></devList></ns1:getDeviceListResponse>
+<ns1:getDeviceListResponse xmlns:ns1="http://arrayent.com/zamapi/"><devList><devId>123456789</devId><devName>STA00000000</devName><typeId>1</typeId><sleepMode>SHORT</sleepMode><appID>1097</appID><userID>987654</userID></devList></ns1:getDeviceListResponse>
