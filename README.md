@@ -1,6 +1,6 @@
 # Salus iT500
 
-[![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
+[![hacs_badge](https://img.shields.io/badge/HACS-Default-41BDF5.svg)](https://github.com/hacs/integration)
 [![HA Version](https://img.shields.io/badge/Home%20Assistant-2025.8%2B-blue.svg)](https://www.home-assistant.io/)
 
 Home Assistant integration for the **Salus iT500** internet thermostat, through
@@ -74,11 +74,11 @@ as "CH1 Boost Remaining hours".
 
 ## Installation
 
-1. HACS → ⋮ → **Custom repositories** → add `https://github.com/ZaBug/salus-it500`,
-   type **Integration**.
-2. Download **Salus iT500**, then restart Home Assistant.
-3. Settings → Devices & services → **Add integration** → **Salus iT500**.
-4. Enter the email and password of the Salus iT500 app. If the account has more
+1. HACS → search **Salus iT500** → **Download**, then restart Home Assistant.
+   Or open it directly:
+   [![Open in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=ZaBug&repository=salus-it500&category=integration)
+2. Settings → Devices & services → **Add integration** → **Salus iT500**.
+3. Enter the email and password of the Salus iT500 app. If the account has more
    than one thermostat, pick one (add the integration again for the others).
 
 **Password with special characters?** Salus silently drops them when the
