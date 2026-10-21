@@ -1,0 +1,53 @@
+name: Bug report
+description: Something in the Salus iT500 integration does not work as expected
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before opening an issue, check the **Known limitations** section of the README.
+        Never paste your Salus email, password or tokens. The diagnostics file already redacts them.
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened
+      description: What you did, what you expected and what happened instead.
+    validations:
+      required: true
+  - type: input
+    id: integration_version
+    attributes:
+      label: Integration version
+      placeholder: v0.2.1
+    validations:
+      required: true
+  - type: input
+    id: ha_version
+    attributes:
+      label: Home Assistant version
+      placeholder: "2026.10.1"
+    validations:
+      required: true
+  - type: dropdown
+    id: zones
+    attributes:
+      label: Heating zones
+      options:
+        - One zone
+        - Two zones
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics
+      description: |
+        Settings → Devices & services → Salus iT500 → ⋮ → **Download diagnostics**, then drag the file here.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Debug logs
+      description: |
+        Enable debug logging on the integration page, reproduce the problem, disable it and paste the relevant lines.
+      render: text

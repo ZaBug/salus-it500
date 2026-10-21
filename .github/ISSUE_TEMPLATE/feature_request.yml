@@ -1,0 +1,16 @@
+name: Feature request
+description: Suggest a new feature or an improvement
+labels: [enhancement]
+body:
+  - type: textarea
+    id: request
+    attributes:
+      label: What would you like
+      description: The feature and the problem it solves.
+    validations:
+      required: true
+  - type: textarea
+    id: app
+    attributes:
+      label: Does the Salus iT500 app support it?
+      description: The integration uses the same cloud API as the app, so features the app lacks are usually not possible.
