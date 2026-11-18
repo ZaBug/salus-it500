@@ -63,7 +63,7 @@ class SalusClimate(SalusEntity, ClimateEntity):
     manual setpoint) shows as AUTO with the temp_hold preset.
     """
 
-    _attr_temperature_unit = UnitOfTemperature.CELSIUS
+    _attr_native_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_hvac_modes = [HVACMode.OFF, HVACMode.HEAT, HVACMode.AUTO]
     _attr_preset_modes = [PRESET_NONE, PRESET_TEMP_HOLD]
     _attr_min_temp = MIN_TEMP
@@ -96,11 +96,11 @@ class SalusClimate(SalusEntity, ClimateEntity):
         return super().available and self.zone in self.coordinator.data.zones
 
     @property
-    def current_temperature(self) -> float | None:
+    def native_current_temperature(self) -> float | None:
         return self._zone.room_temperature
 
     @property
-    def target_temperature(self) -> float | None:
+    def native_target_temperature(self) -> float | None:
         return self._zone.setpoint
 
     @property
